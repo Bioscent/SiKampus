@@ -12,7 +12,20 @@ let loadingWindow;
 const isDev = process.env.NODE_ENV !== 'production';
 const basePath = isDev ? __dirname : process.resourcesPath;
 
-// 🔍 Fungsi cek port
+// 🔍 Fungsi cek port apakah available
+function checkPort(port, host = '127.0.0.1') {
+  return new Promise((resolve) => {
+    const server = net.createServer()
+      .once('error', () => resolve(false)) // port kepakai
+      .once('listening', () => {
+        server.close();
+        resolve(true); // port kosong
+      })
+      .listen(port, host);
+  });
+}
+
+// 🔍 Fungsi tunggu port benar-benar ready
 function waitForPort(port, host = '127.0.0.1', timeout = 20000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
@@ -52,7 +65,7 @@ function waitForPort(port, host = '127.0.0.1', timeout = 20000) {
 app.on('ready', async () => {
   const buildPath = path.join(basePath, 'build');
 
-  // 🔹 Buat loading window dulu
+  // 🔹 Loading window (opsional, kalau mau skip bisa hapus)
   loadingWindow = new BrowserWindow({
     width: 400,
     height: 250,
@@ -65,69 +78,54 @@ app.on('ready', async () => {
   loadingWindow.loadFile(path.join(buildPath, 'loading.html'));
   loadingWindow.center();
 
-  // Lokasi PHP portable
+  // Lokasi PHP & MariaDB
   const phpPath = path.join(basePath, 'php', 'php.exe');
   const phpIniPath = path.join(basePath, 'php', 'php.ini');
-
-  // Lokasi MariaDB portable
   const mariadbPath = path.join(basePath, 'mariadb', 'bin', 'mysqld.exe');
   const myIniPath = path.join(basePath, 'mariadb', 'my.ini');
 
-  // Jalankan MariaDB di port 3307
+  // 🔹 Start MariaDB
   const mariadbCommand = `"${mariadbPath}" --defaults-file="${myIniPath}" --standalone --console --port=3307`;
   mariadbServer = exec(mariadbCommand, { cwd: path.join(basePath, 'mariadb') });
 
-  mariadbServer.stdout?.on('data', (data) => console.log(`MariaDB: ${data}`));
-  mariadbServer.stderr?.on('data', (data) => console.error(`MariaDB Error: ${data}`));
+  // 🔹 Cari port kosong mulai dari 8080
+  let phpPort = 8080;
+  while (!(await checkPort(phpPort))) {
+    phpPort++;
+  }
 
-  waitForPort(3307).then(() => {
-    console.log("✅ MariaDB siap!");
-  }).catch((err) => {
-    console.error("⚠️ MariaDB gagal start:", err.message);
+  // 🔹 Start PHP server
+  const phpCommand = `"${phpPath}" -c "${phpIniPath}" -S localhost:${phpPort} -t "${buildPath}"`;
+  phpServer = exec(phpCommand);
+
+  // 🚀 Langsung buka window utama tanpa tunggu server siap
+  mainWindow = new BrowserWindow({
+    width: 1280,
+    height: 720,
+    show: false,
+    webPreferences: { nodeIntegration: false }
   });
 
-  // ✅ Jalankan PHP server
-  const phpCommand = `"${phpPath}" -c "${phpIniPath}" -S localhost:8080 -t "${buildPath}"`;
-  console.log('Menjalankan server PHP:', phpCommand);
+  mainWindow.loadURL(`http://localhost:${phpPort}/index.php`);
 
-  phpServer = exec(phpCommand);
-  phpServer.stdout?.on('data', (data) => console.log(`PHP Server: ${data}`));
-  phpServer.stderr?.on('data', (data) => console.error(`PHP Error: ${data}`));
-
-  // ✅ Tunggu MariaDB & PHP siap → lalu tampilkan window utama
-  try {
-    await waitForPort(3307);   // tunggu MariaDB dulu
-    console.log("✅ MariaDB siap!");
-    await waitForPort(8080);   // lalu tunggu PHP
-    console.log('✅ PHP server siap!');
-
-    mainWindow = new BrowserWindow({
-      width: 1280,
-      height: 720,
-      show: false,
-      webPreferences: { nodeIntegration: false }
-    });
-
-    mainWindow.maximize();
-    mainWindow.loadURL('http://localhost:8080/index.php');
-
-    mainWindow.once('ready-to-show', () => {
-      if (loadingWindow) {
-        loadingWindow.close();
-        loadingWindow = null;
-      }
-      mainWindow.show();
-    });
-  } catch (err) {
-    console.error('⚠️ Startup gagal:', err.message);
+  mainWindow.once('ready-to-show', () => {
     if (loadingWindow) {
       loadingWindow.close();
       loadingWindow = null;
     }
-    mainWindow = new BrowserWindow({ width: 1280, height: 720 });
+
+    // 🔹 Baru maximize setelah loading window ditutup
     mainWindow.maximize();
-    mainWindow.loadURL('http://localhost:8080/index.php');
-  }
+    mainWindow.show();
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    if (loadingWindow) {
+      loadingWindow.close();
+      loadingWindow = null;
+    }
+    mainWindow.show();
+  });
 });
 
 app.on('will-quit', () => {

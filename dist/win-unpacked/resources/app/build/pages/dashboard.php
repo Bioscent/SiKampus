@@ -240,7 +240,7 @@ $jurnals = $stmt->fetchAll(PDO::FETCH_ASSOC);
                       <?= htmlspecialchars($j['nama_matkul']) ?>
                     </p>
                     <p class="text-sm text-gray-600">
-                      Belajar tentang: <?= !empty($j['catatan']) ? nl2br(htmlspecialchars($j['catatan'])) : '-' ?>
+                      <?= !empty($j['catatan']) ? nl2br(htmlspecialchars($j['catatan'])) : '-' ?>
                     </p>
                     <p class="text-xs text-gray-500 mt-1">
                       <?= date("d F Y H:i", strtotime($j['created_at'])) ?>
