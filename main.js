@@ -8,12 +8,18 @@ let mariadbServer;
 let mainWindow;
 let loadingWindow;
 
-// 🔹 Path untuk build (html, css, js) → ada di dalam app.asar
-const appPath = app.getAppPath();
-const buildPath = path.join(appPath, 'build');
+// ✅ Deteksi mode dev atau production
+const isDev = !app.isPackaged;
 
-// 🔹 Path untuk php & mariadb → hasil extraResources (di luar asar)
-const resourcesPath = process.resourcesPath;
+// 🔹 Path build (html, css, js)
+const buildPath = isDev
+  ? path.join(__dirname, 'build')       // saat npm start
+  : path.join(app.getAppPath(), 'build'); // saat dist (app.asar)
+
+// 🔹 Path php & mariadb
+const resourcesPath = isDev
+  ? path.join(__dirname, 'resources')  // saat npm start
+  : process.resourcesPath;             // saat dist
 
 // 🔍 Fungsi cek port apakah available
 function checkPort(port, host = '127.0.0.1') {
