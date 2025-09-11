@@ -1,0 +1,11 @@
+{
+  "name": "sistem-kampus",
+  "version": "4.6.0",
+  "description": "Sistem Kampus by Bara",
+  "author": "Bara Paramarta Widanoto",
+  "main": "main.js",
+  "dependencies": {
+    "highlight.js": "^11.4.0",
+    "tailwindcss-transforms": "^2.2.0"
+  }
+}

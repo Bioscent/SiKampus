@@ -1,0 +1,49 @@
+{
+  "name": "sistem-kampus",
+  "version": "4.6.0",
+  "description": "Sistem Kampus by Bara",
+  "author": "Bara Paramarta Widanoto",
+  "main": "main.js",
+  "scripts": {
+    "build:css": "tailwindcss build -i src/styles.css -o build/assets/css/soft-ui-dashboard-tailwind.css",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.sistem.jamat",
+    "productName": "SiKampus",
+    "files": [
+      "build/**/*",
+      "main.js",
+      "package.json"
+    ],
+    "asar": false,
+    "extraResources": [
+      {
+        "from": "php/",
+        "to": "php"
+      },
+      {
+        "from": "mariadb/",
+        "to": "mariadb"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "highlight.js": "^11.4.0",
+    "tailwindcss-transforms": "^2.2.0"
+  },
+  "devDependencies": {
+    "electron": "^37.4.0",
+    "electron-builder": "^24.13.3",
+    "electron-reload": "^2.0.0-alpha.1",
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.6",
+    "postcss-cli": "^9.1.0",
+    "tailwindcss": "^3.0.19"
+  }
+}
