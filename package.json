@@ -1,6 +1,6 @@
 {
   "name": "sistem-kampus",
-  "version": "5.0.0",
+  "version": "5.2.0",
   "description": "Sistem Kampus by Bara",
   "author": "Bara Paramarta Widanoto",
   "main": "main.js",
@@ -18,14 +18,18 @@
       "main.js",
       "package.json"
     ],
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "resources/php/**",
+      "resources/mariadb/**"
+    ],
     "extraResources": [
       {
-        "from": "php/",
+        "from": "resources/php/",
         "to": "php"
       },
       {
-        "from": "mariadb/",
+        "from": "resources/mariadb/",
         "to": "mariadb"
       }
     ],
