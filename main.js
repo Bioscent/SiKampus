@@ -34,6 +34,18 @@ function checkPort(port, host = '127.0.0.1') {
   });
 }
 
+// 🔍 Tunggu sampai MariaDB siap
+async function waitForMariaDB(port = 3307, retries = 20, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    if (await checkPort(port)) {
+      return true;
+    }
+    console.log(`⏳ MariaDB belum siap, coba lagi... (${i + 1}/${retries})`);
+    await new Promise(r => setTimeout(r, delay));
+  }
+  return false;
+}
+
 app.on('ready', async () => {
   // 🔹 Loading window
   loadingWindow = new BrowserWindow({
@@ -57,6 +69,14 @@ app.on('ready', async () => {
   // 🔹 Start MariaDB
   const mariadbCommand = `"${mariadbPath}" --defaults-file="${myIniPath}" --standalone --console --port=3307`;
   mariadbServer = exec(mariadbCommand, { cwd: path.join(resourcesPath, 'mariadb') });
+
+  // ✅ Tunggu MariaDB siap
+  const dbReady = await waitForMariaDB(3307, 20, 1000); // coba 20x, tiap 1 detik
+  if (!dbReady) {
+    console.error("❌ MariaDB gagal start.");
+    app.quit();
+    return;
+  }
 
   // 🔹 Cari port kosong mulai dari 8080
   let phpPort = 8080;
